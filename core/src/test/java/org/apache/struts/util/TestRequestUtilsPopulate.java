@@ -22,16 +22,14 @@
 package org.apache.struts.util;
 
 import javax.servlet.ServletException;
-
+import javax.servlet.http.HttpServletRequest;
 import junit.framework.Test;
 import junit.framework.TestSuite;
-
-import org.apache.struts.action.ActionMapping;
-import org.apache.struts.util.RequestUtils;
 import org.apache.struts.Globals;
-import org.apache.struts.mock.TestMockBase;
+import org.apache.struts.action.ActionMapping;
 import org.apache.struts.mock.MockFormBean;
 import org.apache.struts.mock.MockMultipartRequestHandler;
+import org.apache.struts.mock.TestMockBase;
 
 /**
  * Unit tests for the RequestUtil's <code>populate</code> method.
@@ -120,4 +118,28 @@ public class TestRequestUtilsPopulate extends TestMockBase {
 
     }
 
+
+    /**
+     * Unit test for CVE-2014-0114. The {@link RequestUtils#populate(Object, HttpServletRequest)}
+     * method should throw an {@link IllegalArgumentException}
+     * when a parameter contains an illegal value that is trying to access the class loader
+     */
+    public void testPopulateWithInfectedHeaderParamater() throws Exception {
+
+        String mockMappingName = "mockMapping";
+        String stringValue = "class.classLoader.doSomethingWithClassLoader";
+
+        MockFormBean mockForm = new MockFormBean();
+        ActionMapping mapping = new ActionMapping();
+        mapping.setName(mockMappingName);
+        request.addParameter(stringValue, stringValue);
+
+        try {
+            RequestUtils.populate(mockForm, request);
+            fail("Missing exception");
+        } catch (IllegalArgumentException ee) {
+            assertEquals("Parameter name contains illegal content!", ee.getMessage());
+        }
+        RequestUtils.populate(mockForm, request);
+    }
 }

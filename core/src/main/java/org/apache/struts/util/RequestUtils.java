@@ -20,14 +20,29 @@
  */
 package org.apache.struts.util;
 
+import java.lang.reflect.InvocationTargetException;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.Hashtable;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import javax.servlet.ServletContext;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpSession;
 import org.apache.commons.beanutils.BeanUtils;
 import org.apache.commons.beanutils.PropertyUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.struts.Globals;
-import org.apache.struts.action.ActionRedirect;
 import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionMapping;
+import org.apache.struts.action.ActionRedirect;
 import org.apache.struts.action.ActionServlet;
 import org.apache.struts.action.ActionServletWrapper;
 import org.apache.struts.config.ActionConfig;
@@ -37,24 +52,6 @@ import org.apache.struts.config.ModuleConfig;
 import org.apache.struts.upload.FormFile;
 import org.apache.struts.upload.MultipartRequestHandler;
 import org.apache.struts.upload.MultipartRequestWrapper;
-
-import javax.servlet.ServletContext;
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpSession;
-
-import java.lang.reflect.InvocationTargetException;
-import java.net.MalformedURLException;
-import java.net.URL;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Enumeration;
-import java.util.HashMap;
-import java.util.Hashtable;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
 
 /**
  * <p>General purpose utility methods related to processing a servlet request
@@ -71,6 +68,8 @@ public class RequestUtils {
     protected static Log log = LogFactory.getLog(RequestUtils.class);
 
     // --------------------------------------------------------- Public Methods
+
+    private static final String CLASS_REGEX = "(.*\\.|^|.*|\\[('|\"))(c|C)lass(\\.|('|\")]|\\[).*";
 
     /**
      * <p>Create and return an absolute URL for the specified context-relative
@@ -460,6 +459,11 @@ public class RequestUtils {
                 parameterValue = rationalizeMultipleFileProperty(bean, name, parameterValue);
             } else {
                 parameterValue = request.getParameterValues(name);
+            }
+
+            /*Fix for CVE-2014-0114. Checks if the header has a value that allows it to access the class loader*/
+            if (stripped.matches(CLASS_REGEX)) {
+                throw new IllegalArgumentException("Parameter name contains illegal content!");
             }
 
             // Populate parameters, except "standard" struts attributes
