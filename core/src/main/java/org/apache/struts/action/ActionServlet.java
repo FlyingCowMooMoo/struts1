@@ -23,6 +23,7 @@ package org.apache.struts.action;
 import org.apache.commons.beanutils.BeanUtils;
 import org.apache.commons.beanutils.ConvertUtils;
 import org.apache.commons.beanutils.PropertyUtils;
+import org.apache.commons.beanutils.SuppressPropertiesBeanIntrospector;
 import org.apache.commons.beanutils.converters.BigDecimalConverter;
 import org.apache.commons.beanutils.converters.BigIntegerConverter;
 import org.apache.commons.beanutils.converters.BooleanConverter;
@@ -72,11 +73,7 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.Enumeration;
-import java.util.Iterator;
-import java.util.List;
-import java.util.MissingResourceException;
+import java.util.*;
 
 /**
  * <p><strong>ActionServlet</strong> provides the "controller" in the
@@ -1785,6 +1782,11 @@ public class ActionServlet extends HttpServlet {
             ConvertUtils.register(new LongConverter(null), Long.class);
             ConvertUtils.register(new ShortConverter(null), Short.class);
         }
+
+
+        PropertyUtils.addBeanIntrospector(SuppressPropertiesBeanIntrospector.SUPPRESS_CLASS);
+        PropertyUtils.addBeanIntrospector(new SuppressPropertiesBeanIntrospector(Collections.singleton("multipartRequestHandler")));
+        PropertyUtils.addBeanIntrospector(new SuppressPropertiesBeanIntrospector(Collections.singleton("resultValueMap")));
     }
 
     /**
